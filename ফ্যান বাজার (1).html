@@ -1,0 +1,808 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>ফ্যান বাজার</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: sticky shop bar, 3D showroom (one live stage + info panel), filters, thumbnail grid, slide-in cart */
+:root {
+  --bg: #fbf9fc;
+  --surface: #ffffff;
+  --ink: #241a2b;
+  --muted: #6c6275;
+  --line: #e6dfec;
+  --line-strong: #b9aec4;
+  --plum: #6e1f78;
+  --plum-soft: #f3e7f5;
+  --click: #0a5fb4;
+  --click-soft: #e3effb;
+  --ok: #1d7a46;
+  --err: #b3261e;
+  --on-accent: #ffffff;
+  --stage-a: #f7eefb;
+  --stage-b: #ddcbe8;
+  --stage-ca: #eaf3fc;
+  --stage-cb: #bcd5ee;
+  --shadow: 0 10px 30px rgba(36, 26, 43, .12);
+  --f-body: "Hind Siliguri", "Noto Sans Bengali", system-ui, sans-serif;
+  --f-num: "Space Grotesk", "Hind Siliguri", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16111a; --surface: #211a27; --ink: #f2ecf5; --muted: #a79bb1;
+    --line: #372d40; --line-strong: #6b5d78; --plum: #d79ae0; --plum-soft: #34213a;
+    --click: #7db8f2; --click-soft: #1b2a3b; --ok: #62c88e; --err: #ff8a80; --on-accent: #1a1020;
+    --stage-a: #3b2a47; --stage-b: #1a1221; --stage-ca: #1f3347; --stage-cb: #0f1a26;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .5); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16111a; --surface: #211a27; --ink: #f2ecf5; --muted: #a79bb1;
+  --line: #372d40; --line-strong: #6b5d78; --plum: #d79ae0; --plum-soft: #34213a;
+  --click: #7db8f2; --click-soft: #1b2a3b; --ok: #62c88e; --err: #ff8a80; --on-accent: #1a1020;
+  --stage-a: #3b2a47; --stage-b: #1a1221; --stage-ca: #1f3347; --stage-cb: #0f1a26;
+  --shadow: 0 10px 30px rgba(0, 0, 0, .5); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 40px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1120px; margin: 0 auto; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--plum); outline-offset: 2px; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+.bar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; }
+.brand { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.brand b { font-size: 1.3rem; font-weight: 700; letter-spacing: .01em; }
+.brand span { font-size: .82rem; color: var(--muted); }
+.cartbtn { display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--ink); background: transparent; border-radius: 999px; padding: 8px 16px; font-weight: 600; }
+.cartbtn .n { font-family: var(--f-num); background: var(--plum); color: var(--on-accent); border-radius: 999px; min-width: 24px; height: 24px; padding: 0 7px; display: inline-grid; place-items: center; font-size: .85rem; }
+
+.intro { padding: 26px 0 0; display: grid; gap: 12px; }
+.intro h1 { font-size: clamp(1.6rem, 5.2vw, 2.5rem); line-height: 1.2; margin: 0; font-weight: 700; text-wrap: balance; max-width: 24ch; }
+.intro p { margin: 0; color: var(--muted); max-width: 60ch; }
+.trust { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 0; padding: 0; list-style: none; }
+.trust li { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 12px; font-size: .88rem; }
+
+/* Showroom */
+.showroom { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; padding: 22px 0 8px; align-items: start; scroll-margin-top: 72px; }
+.stage { position: relative; aspect-ratio: 4 / 3.1; min-height: 300px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line);
+  background: radial-gradient(120% 95% at 50% 32%, var(--stage-a), var(--stage-b)); }
+.stage[data-brand="Click"] { background: radial-gradient(120% 95% at 50% 32%, var(--stage-ca), var(--stage-cb)); }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: grab; outline-offset: -3px; }
+.stage canvas:active { cursor: grabbing; }
+.stage-top { position: absolute; left: 12px; right: 12px; top: 12px; display: flex; justify-content: space-between; gap: 8px; align-items: center; pointer-events: none; flex-wrap: wrap; }
+.pill { font-family: var(--f-num); font-weight: 700; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; color: var(--plum); }
+.stage[data-brand="Click"] .pill { color: var(--click); }
+.hint { font-size: .85rem; color: var(--muted); }
+.stage-ctl { position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.ctl { display: inline-flex; align-items: center; gap: 8px; }
+.ctl > span { font-size: .85rem; color: var(--muted); }
+.seg { display: inline-flex; border: 1.5px solid var(--line-strong); border-radius: 999px; background: var(--surface); overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 5px 13px; font-weight: 600; min-width: 36px; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.tog { border: 1.5px solid var(--line-strong); background: var(--surface); border-radius: 999px; padding: 5px 14px; font-weight: 600; }
+.tog[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.nogl { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
+
+.panel { display: grid; gap: 10px; min-width: 0; }
+.tag { align-self: flex-start; font-size: .78rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--plum); font-family: var(--f-num); }
+[data-brand="Click"] .tag, .panel[data-brand="Click"] .tag { color: var(--click); }
+.panel h2 { margin: 0; font-size: clamp(1.3rem, 3.6vw, 1.7rem); line-height: 1.3; font-weight: 700; text-wrap: balance; }
+.sub { margin: 0; color: var(--muted); font-size: .95rem; }
+.pbuy { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 6px 0; }
+.price { font-family: var(--f-num); font-size: 1.4rem; font-weight: 700; }
+.price small { font-family: var(--f-body); font-size: .76rem; font-weight: 400; color: var(--muted); margin-left: 4px; }
+.price.ask { font-family: var(--f-body); font-size: 1.05rem; color: var(--muted); font-weight: 500; }
+.add { background: var(--plum); color: var(--on-accent); border: 0; border-radius: 10px; padding: 9px 18px; font-weight: 600; }
+[data-brand="Click"] .add, .panel[data-brand="Click"] .add { background: var(--click); }
+.add:active { transform: translateY(1px); }
+.spec { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.spec td { padding: 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.spec td:first-child { color: var(--muted); padding-right: 12px; }
+.spec td:last-child { text-align: right; font-family: var(--f-num); font-weight: 500; }
+.note { font-size: .88rem; color: var(--muted); margin: 0; }
+
+/* Filters + grid */
+.filters { display: flex; flex-wrap: wrap; gap: 8px 8px; padding: 22px 0 6px; align-items: center; }
+.filters .gap { width: 100%; height: 0; }
+.chip { border: 1.5px solid var(--line-strong); background: transparent; border-radius: 999px; padding: 5px 15px; font-weight: 500; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 18px; padding: 12px 0 30px; }
+.empty-grid { color: var(--muted); padding: 20px 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.card.sel { border-color: var(--plum); box-shadow: 0 0 0 1px var(--plum); }
+.card[data-brand="Click"].sel { border-color: var(--click); box-shadow: 0 0 0 1px var(--click); }
+.pic { border: 0; display: grid; place-items: center; width: 100%; aspect-ratio: 4 / 3; background: var(--plum-soft); padding: 0; position: relative; }
+.card[data-brand="Click"] .pic { background: var(--click-soft); }
+.pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.pic .ph { color: var(--muted); font-size: .9rem; }
+.card .body { padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.card h3 { margin: 0; font-size: 1.05rem; line-height: 1.35; font-weight: 600; }
+.card .sub { font-size: .9rem; }
+.buy { margin-top: auto; padding-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px 10px; flex-wrap: wrap; }
+.card .price { font-size: 1.2rem; }
+.card .price.ask { font-size: .95rem; }
+.btns { display: flex; gap: 8px; }
+.view { border: 1.5px solid var(--line-strong); background: transparent; border-radius: 10px; padding: 7px 12px; font-weight: 600; }
+.card .add { padding: 8px 14px; }
+
+.foot { border-top: 1px solid var(--line); padding-top: 20px; color: var(--muted); font-size: .92rem; display: grid; gap: 4px; }
+.foot b { color: var(--ink); }
+
+/* Cart drawer */
+.scrim { position: fixed; inset: 0; background: rgba(20, 10, 25, .5); z-index: 20; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100%); z-index: 21; background: var(--bg); box-shadow: var(--shadow); display: flex; flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px); }
+.dh { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.dh h2 { margin: 0; font-size: 1.2rem; }
+.x { border: 0; background: transparent; font-size: 1.6rem; line-height: 1; padding: 4px 10px; }
+.dbody { flex: 1; overflow-y: auto; padding: 14px 16px; display: grid; gap: 12px; align-content: start; }
+.empty { color: var(--muted); text-align: center; padding: 40px 0; }
+.line { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.line .nm { font-weight: 500; min-width: 0; }
+.line .lp { font-family: var(--f-num); font-weight: 700; text-align: right; }
+.line .lp.ask { font-family: var(--f-body); font-weight: 500; font-size: .85rem; color: var(--muted); }
+.qty { display: inline-flex; align-items: center; border: 1.5px solid var(--line-strong); border-radius: 8px; width: max-content; }
+.qty button { border: 0; background: transparent; width: 34px; height: 32px; font-size: 1.1rem; }
+.qty span { font-family: var(--f-num); min-width: 28px; text-align: center; }
+.rm { border: 0; background: transparent; color: var(--muted); text-decoration: underline; justify-self: end; font-size: .88rem; }
+.df { border-top: 1px solid var(--line); padding: 14px 16px; display: grid; gap: 10px; background: var(--surface); }
+.tot { display: flex; justify-content: space-between; align-items: baseline; font-size: 1.1rem; font-weight: 600; gap: 12px; }
+.tot b { font-family: var(--f-num); font-size: 1.3rem; }
+.primary { background: var(--plum); color: var(--on-accent); border: 0; border-radius: 10px; padding: 12px 16px; font-weight: 700; text-align: center; text-decoration: none; display: block; }
+.ghost { background: transparent; border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 10px 16px; font-weight: 600; text-align: center; text-decoration: none; display: block; color: var(--ink); }
+.field { display: grid; gap: 4px; }
+.field label { font-size: .9rem; font-weight: 500; }
+.field input, .field textarea { border: 1.5px solid var(--line-strong); border-radius: 8px; padding: 9px 12px; background: var(--surface); width: 100%; }
+.field .err { color: var(--err); font-size: .84rem; min-height: 1em; }
+.sum { white-space: pre-wrap; background: var(--surface); border: 1px dashed var(--line-strong); border-radius: 10px; padding: 12px; font-size: .92rem; overflow-wrap: anywhere; }
+.done { display: grid; gap: 4px; }
+.done h3 { margin: 0; color: var(--ok); }
+
+/* Polish layer */
+.bar { background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.brand b { display: flex; align-items: center; gap: 9px; }
+.brand b::before { content: ""; width: 22px; height: 22px; border-radius: 50%; flex: none; background: conic-gradient(var(--plum) 0 33%, var(--click) 0 66%, var(--plum-soft) 0); box-shadow: inset 0 0 0 5px var(--bg), 0 0 0 1.5px var(--line-strong); }
+.intro { margin-top: 18px; padding: clamp(20px, 4vw, 36px); border-radius: 22px; border: 1px solid var(--line); background: linear-gradient(115deg, var(--plum-soft) 0%, var(--surface) 52%, var(--click-soft) 100%); }
+.intro h1 em { font-style: normal; color: var(--plum); background: linear-gradient(transparent 68%, color-mix(in srgb, var(--plum) 22%, transparent) 0); padding: 0 2px; }
+.trust li { background: color-mix(in srgb, var(--surface) 80%, transparent); }
+.stage { box-shadow: var(--shadow); }
+.stage::before { content: ""; position: absolute; left: 50%; top: 52%; width: 70%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--surface) 75%, transparent), transparent 68%); pointer-events: none; }
+.navb { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--line-strong); background: var(--surface); font-size: 1.3rem; line-height: 1; display: grid; place-items: center; box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+.navb.l { left: 10px; } .navb.r { right: 10px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px; box-shadow: var(--shadow); }
+.add { box-shadow: 0 6px 16px color-mix(in srgb, var(--plum) 35%, transparent); }
+[data-brand="Click"] .add { box-shadow: 0 6px 16px color-mix(in srgb, var(--click) 35%, transparent); }
+.sec { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 26px 0 0; flex-wrap: wrap; }
+.sec h2 { margin: 0; font-size: 1.35rem; }
+.sec span { color: var(--muted); font-size: .9rem; }
+.filters { padding-top: 12px; }
+.card { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.pic { background: radial-gradient(90% 80% at 50% 40%, var(--surface), var(--plum-soft)); }
+.card[data-brand="Click"] .pic { background: radial-gradient(90% 80% at 50% 40%, var(--surface), var(--click-soft)); }
+.card .tag { display: inline-block; align-self: flex-start; background: var(--plum-soft); border-radius: 999px; padding: 1px 10px; }
+.card[data-brand="Click"] .tag { background: var(--click-soft); }
+.wafab { position: fixed; z-index: 6; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: #1fa855; color: #fff; text-decoration: none; font-weight: 700; border-radius: 999px; padding: 12px 18px; box-shadow: 0 8px 22px rgba(0,0,0,.28); }
+@media (prefers-reduced-motion: no-preference) {
+  .card { animation: up .45s ease both; }
+  @keyframes up { from { opacity: 0; transform: translateY(14px); } }
+}
+@media (max-width: 820px) {
+  .panel { padding: 16px; }
+  .showroom { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .stage { aspect-ratio: 4 / 3.4; }
+}
+@media (prefers-reduced-motion: no-preference) { .drawer { animation: slide .22s ease-out; } @keyframes slide { from { transform: translateX(30px); opacity: 0; } } }
+</style>
+
+<div class="bar"><div class="wrap">
+  <div class="brand"><b id="shopName"></b><span>ফ্যান ও ইলেকট্রিক পণ্য</span></div>
+  <button class="cartbtn" id="openCart" type="button" aria-label="কার্ট খুলুন">কার্ট <span class="n" id="cnt">0</span></button>
+</div></div>
+
+<main class="wrap">
+  <section class="intro">
+    <h1>ফ্যান <em>ঘুরিয়ে দেখুন</em>, তারপর কিনুন</h1>
+    <p>প্রতিটি পণ্যের ৩ডি মডেল টেনে ঘুরিয়ে দেখা যায়। গতি বাড়িয়ে দেখুন ফ্যান কীভাবে ঘোরে, তারপর কার্টে যোগ করুন।</p>
+    <ul class="trust">
+      <li>ISO 9001:2015 সার্টিফাইড</li>
+      <li>BSTI অনুমোদিত (BDS-৮১৮)</li>
+      <li>বাংলাদেশে তৈরি, RFL গ্রুপের পণ্য</li>
+      <li>পণ্যভেদে ৬ মাস থেকে ৭ বছর ওয়ারেন্টি</li>
+    </ul>
+  </section>
+
+  <section class="showroom" id="showroom" aria-label="৩ডি শোরুম">
+    <div class="stage" id="stage" data-brand="Vision">
+      <canvas id="gl" tabindex="0" role="img" aria-label="পণ্যের ৩ডি মডেল। বাম ও ডান তীর চাপলে ঘোরে।"></canvas>
+      <button class="navb l" id="prevP" type="button" aria-label="আগের পণ্য">‹</button><button class="navb r" id="nextP" type="button" aria-label="পরের পণ্য">›</button>
+      <div class="stage-top"><span class="pill" id="stTag"></span><span class="hint" id="stHint">টেনে ঘুরিয়ে দেখুন</span></div>
+      <div class="stage-ctl">
+        <div class="ctl" id="spdCtl"><span>গতি</span>
+          <div class="seg" id="spdSeg" role="group" aria-label="ফ্যানের গতি">
+            <button type="button" data-s="0">বন্ধ</button><button type="button" data-s="1">১</button><button type="button" data-s="2">২</button><button type="button" data-s="3">৩</button>
+          </div>
+        </div>
+        <button class="tog" id="autoBtn" type="button" aria-pressed="true">নিজে নিজে ঘুরুক</button>
+      </div>
+      <p class="nogl" id="noGl" hidden>এই ব্রাউজারে ৩ডি মডেল দেখানো যাচ্ছে না। নিচের তালিকা থেকে পণ্য বেছে নিতে পারবেন।</p>
+    </div>
+    <div class="panel" id="panel" data-brand="Vision" aria-live="polite">
+      <span class="tag" id="pTag"></span>
+      <h2 id="pName"></h2>
+      <p class="sub" id="pSub"></p>
+      <div class="pbuy"><div class="price" id="pPrice"></div><button class="add" id="pAdd" type="button">কার্টে যোগ করুন</button></div>
+      <table class="spec" id="pSpec"></table>
+      <p class="note" id="pNote" hidden></p>
+    </div>
+  </section>
+
+  <div class="sec"><h2>সব পণ্য</h2><span>ছবিতে চাপ দিলে ওপরে ৩ডি-তে দেখা যাবে</span></div>
+  <div class="filters" id="filters" role="group" aria-label="পণ্যের ধরন"></div>
+  <section class="grid" id="grid"></section>
+
+  <footer class="foot">
+    <b id="footName"></b>
+    <span id="footPhone"></span>
+    <span id="footAddr"></span>
+    <span>ওয়ারেন্টি কার্ড প্যাকেটের ভিতরে থাকে। পণ্য বুঝে নেওয়ার সময় কার্ডটি দেখে নিন।</span>
+  </footer>
+</main>
+
+<a class="wafab" id="waFab" target="_blank" rel="noopener">WhatsApp-এ কথা বলুন</a>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="আপনার কার্ট" hidden>
+  <div class="dh"><h2 id="dtitle">আপনার কার্ট</h2><button class="x" id="closeCart" type="button" aria-label="বন্ধ করুন">×</button></div>
+  <div class="dbody" id="dbody"></div>
+  <div class="df" id="dfoot"></div>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ===== দোকানের তথ্য: এখানে বদলান ===== */
+var SHOP = {
+  name: "ফ্যান বাজার",
+  phone: "০১৭২৪-০৭৬৩৫৭",
+  whatsapp: "8801724076357",   /* দেশ কোডসহ, + ছাড়া */
+  address: "আপনার দোকানের ঠিকানা এখানে লিখুন"
+};
+
+/* ===== পণ্যের তালিকা: price: null মানে "দাম জিজ্ঞাসা করুন"। দাম জানলে সংখ্যা বসান ===== */
+var CATS = [["all", "সব ধরন"], ["ceiling", "সিলিং ফ্যান"], ["wall", "ওয়াল ও অরবিট"], ["stand", "স্ট্যান্ড ও টেবিল"], ["electric", "ইলেকট্রিক পণ্য"]];
+var CATNAME = { ceiling: "সিলিং ফ্যান", wall: "ওয়াল ও অরবিট ফ্যান", stand: "স্ট্যান্ড ও টেবিল ফ্যান", electric: "ইলেকট্রিক পণ্য" };
+
+var C_IVORY = { d: 1.4, n: 3, body: 0xeadfc6, blade: 0xf1e7cf, accent: 0x9a6a44, cap: 0x4a2e26 };
+var C_WHITE = { d: 1.4, n: 3, body: 0xf1f1f1, blade: 0xfafafa, accent: 0xb48a62, cap: 0x4a2e26 };
+
+var PRODUCTS = [
+  { id: "v-ivory", brand: "Vision", cat: "ceiling", m: "ceil", o: C_IVORY,
+    name: "Vision সুপার সিলিং ফ্যান ৫৬\" (আইভরি)", sub: "১৪০০ মি.মি., ৩ ব্লেড, রেগুলেটর ছাড়া", price: 4250,
+    spec: [["সাইজ", "১৪০০ মি.মি. / ৫৬\""], ["ভোল্টেজ", "২২০-২৩০ V"], ["পাওয়ার", "৮০ ওয়াট ±৫%"], ["ফ্রিকোয়েন্সি", "৫০ Hz"], ["স্পিড", "৩২০ RPM"], ["পাওয়ার ফ্যাক্টর", "০.৯"], ["এয়ার ডেলিভারি", "২২০ m³/মিনিট"], ["ওয়ারেন্টি", "৭ বছর"], ["আইটেম কোড", "969323"]] },
+  { id: "v-white", brand: "Vision", cat: "ceiling", m: "ceil", o: C_WHITE,
+    name: "Vision সুপার সিলিং ফ্যান ৫৬\" (সাদা)", sub: "১৪০০ মি.মি., ৩ ব্লেড, রেগুলেটর ছাড়া", price: 4250,
+    spec: [["সাইজ", "১৪০০ মি.মি. / ৫৬\""], ["ভোল্টেজ", "২২০-২৩০ V"], ["পাওয়ার", "৮০ ওয়াট ±৫%"], ["ফ্রিকোয়েন্সি", "৫০ Hz"], ["স্পিড", "৩২০ RPM"], ["পাওয়ার ফ্যাক্টর", "০.৯"], ["এয়ার ডেলিভারি", "২২০ m³/মিনিট"], ["ওয়ারেন্টি", "৭ বছর"], ["আইটেম কোড", "969324"]] },
+  { id: "v-1200", brand: "Vision", cat: "ceiling", m: "ceil", o: { d: 1.2, n: 3, body: 0xeadfc6, blade: 0xf1e7cf, accent: 0x9a6a44, cap: 0x4a2e26 },
+    name: "Vision সিলিং ফ্যান ১২০০ মি.মি. (এনার্জি সেভার)", sub: "ছোট ও মাঝারি ঘরের জন্য, ৩ ব্লেড", price: null,
+    spec: [["সাইজ", "১২০০ মি.মি."], ["ধরন", "এনার্জি সেভার"], ["আইটেম কোড", "807177"]] },
+  { id: "c-crown24", brand: "Click", cat: "ceiling", m: "ceil", o: { d: 0.6, n: 4, body: 0xeaeff4, blade: 0xe6ecf2, accent: 0x9aa7b5, cap: 0x1f262d },
+    name: "Click ক্রাউন সিরিজ সিলিং ফ্যান ২৪\"", sub: "৬০০ মি.মি., ৪ ব্লেড, ছোট ঘরের জন্য", price: null,
+    spec: [["সাইজ", "২৪\" / ৬০০ মি.মি."], ["ভোল্টেজ", "২২০ V"], ["পাওয়ার", "৭৫ ওয়াট"], ["ফ্রিকোয়েন্সি", "৫০ Hz"], ["স্পিড", "৮০০ RPM"], ["পাওয়ার ফ্যাক্টর", "০.৯৮"], ["এয়ার ডেলিভারি", "১১৫ m³/মিনিট"], ["সার্ভিস ভ্যালু", "১.৫৩ m³/মিনিট/ওয়াট"], ["ইনসুলেশন", "F ক্লাস"], ["ওয়ারেন্টি", "৭ বছর"], ["আইটেম কোড", "989022"]] },
+  { id: "c-crown1200", brand: "Click", cat: "ceiling", m: "ceil", o: { d: 1.2, n: 3, body: 0xf3f0e4, blade: 0xf6f3ea, accent: 0xd6a93a, cap: 0x37424a },
+    name: "Click ক্রাউন সিরিজ সিলিং ফ্যান ১২০০ মি.মি.", sub: "৩ ব্লেড, ক্রাউন সিরিজ", price: null,
+    spec: [["সাইজ", "১২০০ মি.মি."], ["সিরিজ", "ক্রাউন"]] },
+  { id: "c-3blade", brand: "Click", cat: "ceiling", m: "ceil", o: { d: 1.4, n: 3, body: 0xf3f0e4, blade: 0xf6f3ea, accent: 0xd6a93a, cap: 0x37424a },
+    name: "Click সিলিং ফ্যান (৩ ব্লেড)", sub: "BSTI অনুমোদিত, ৭ বছর ওয়ারেন্টি", price: null,
+    spec: [["ব্লেড", "৩টি অ্যালুমিনিয়াম"], ["ওয়ারেন্টি", "৭ বছর"], ["মান", "BDS-৮১৮ (BSTI)"], ["কোড", "901477"]] },
+  { id: "c-bldc", brand: "Click", cat: "ceiling", m: "ceil", o: { d: 1.4, n: 3, body: 0xf3f5f7, blade: 0xeef1f4, accent: 0x1fae8f, cap: 0x15332e },
+    name: "Click বিএলডিসি সিলিং ফ্যান ৫৬\" (রিমোটসহ)", sub: "৩৫ ওয়াট, ৫০% এর বেশি বিদ্যুৎ সাশ্রয়", price: null,
+    spec: [["সাইজ", "১৪০০ মি.মি."], ["পাওয়ার", "৩৫ ওয়াট"], ["প্রযুক্তি", "বিএলডিসি"], ["বিদ্যুৎ সাশ্রয়", "৫০% এর বেশি"], ["রিমোট", "সাথে আছে"], ["এনার্জি রেটিং", "৫ স্টার"]],
+    note: "বক্সে লেখা আছে: এই ফ্যান চালাতে ক্যাপাসিটর ও রেগুলেটর ব্যবহার করবেন না।" },
+  { id: "c-wall18", brand: "Click", cat: "wall", m: "wall", o: { r: 0.23, n: 3, blade: 0x2d86c8, hub: 0x2d86c8, body: 0xf0f3f6, rim: 0x3a9ad8, wire: 0xb6c2cf },
+    name: "Click ওয়াল ফ্যান ১৮ ইঞ্চি", sub: "৯০° ঘোরে, ৩ ধাপে গতি", price: null,
+    spec: [["সাইজ", "১৮ ইঞ্চি"], ["অসিলেশন", "৯০°"], ["গতি", "৩ ধাপ"], ["কন্ট্রোল", "দড়ি দিয়ে গতি ও ঘোরা"], ["ওয়ারেন্টি", "৬ মাস"]] },
+  { id: "c-orbit16", brand: "Click", cat: "wall", m: "orbit", o: { r: 0.2, n: 3, blade: 0xe3f1ef, hub: 0xcfe3e0, body: 0xe9f2f0, rim: 0xcde3e0, wire: 0xb6c9c6 },
+    name: "Click অরবিট সিলিং ফ্যান ১৬\"", sub: "৪০০ মি.মি., ছাদ থেকে ঘুরে বাতাস দেয়", price: null,
+    spec: [["সাইজ", "৪০০ মি.মি. / ১৬\""], ["ধরন", "অরবিট সিলিং ফ্যান"], ["ওয়ারেন্টি", "৬ মাস"]] },
+  { id: "v-orbit16", brand: "Vision", cat: "wall", m: "orbit", o: { r: 0.2, n: 3, blade: 0xf6eaf3, hub: 0xe3d3df, body: 0xf3ecf2, rim: 0xe3d3df, wire: 0xc9b9c6 },
+    name: "Vision অরবিট সিলিং ফ্যান ১৬\"", sub: "৪০০ মি.মি., ছাদ থেকে ঘুরে বাতাস দেয়", price: null,
+    spec: [["সাইজ", "৪০০ মি.মি. / ১৬\""], ["ধরন", "অরবিট সিলিং ফ্যান"], ["ওয়ারেন্টি", "৬ মাস"]] },
+  { id: "v-stand", brand: "Vision", cat: "stand", m: "stand", o: { r: 0.225, n: 5, blade: 0xe8e6ea, hub: 0xd8d2d3, body: 0xeeeeee, rim: 0xdcd8da, wire: 0xbdb8bb },
+    name: "Vision হেভি স্ট্যান্ড ফ্যান (ট্রেন্ডি)", sub: "৪৫০ মি.মি., ৫ ব্লেড, পিওর কপার মোটর", price: null,
+    spec: [["সাইজ", "৪৫০ মি.মি."], ["ব্লেড", "৫টি"], ["মোটর", "পিওর কপার"], ["সিরিজ", "ট্রেন্ডি"], ["ওয়ারেন্টি", "৬ মাস"]] },
+  { id: "v-table14", brand: "Vision", cat: "stand", m: "table", o: { r: 0.178, n: 5, blade: 0xffffff, hub: 0xc9b3ad, body: 0xfafafa, rim: 0xf0f0f0, wire: 0xc3c3c8 },
+    name: "Vision রিচার্জেবল টেবিল ফ্যান ১৪\"", sub: "ইউএসবি পোর্ট, এসি/ডিসি চার্জিং", price: null,
+    spec: [["সাইজ", "১৪ ইঞ্চি"], ["ব্লেড", "৫টি"], ["চার্জিং", "এসি / ডিসি"], ["ইউএসবি পোর্ট", "আছে"], ["মোটর", "কপার"], ["ঘোরা", "৯০°"], ["ওয়ারেন্টি", "৬ মাস"]] },
+  { id: "c-remote", brand: "Click", cat: "electric", m: "remote", o: {},
+    name: "Click ফ্যান ও ২ লাইট রিমোট কন্ট্রোল", sub: "RF ওয়্যারলেস, দেয়ালের সুইচসহ", price: null,
+    spec: [["কন্ট্রোল", "১টি ফ্যান ও ২টি লাইট"], ["সংযোগ", "RF ওয়্যারলেস"], ["ব্যবহার", "ডাবল কন্ট্রোল (রিমোট ও সুইচ)"], ["ওয়ারিং ডায়াগ্রাম", "প্যাকেটের ভিতরে"]],
+    note: "বিএলডিসি ফ্যানের জন্য প্রযোজ্য নয়। লাগানোর সময় যোগ্য ইলেকট্রিশিয়ান দিয়ে করান।" },
+  { id: "c-cord", brand: "Click", cat: "electric", m: "cord", o: {},
+    name: "Click এক্সটেনশন কর্ড (৩ সকেট, ৫ গজ)", sub: "আলাদা সুইচ, ওভারলোড প্রোটেক্টর, LED লাইট", price: 940,
+    spec: [["সকেট", "৩টি"], ["ক্যাবল", "৫ গজ (২ পিন)"], ["ভোল্টেজ", "১০০-২৫০ V AC"], ["সর্বোচ্চ কারেন্ট", "১০ A"], ["সর্বোচ্চ লোড", "১৫০০ ওয়াট"], ["আইটেম কোড", "901491"]],
+    note: "একই কর্ড ৩ গজ (কোড 876931) ও ৫ গজ ৩ পিন (কোড 901494) ভার্সনেও আছে।" }
+];
+
+function bn(n) { return Number(n).toLocaleString("bn-BD"); }
+function tk(n) { return "৳" + bn(n); }
+function byId(id) { for (var i = 0; i < PRODUCTS.length; i++) if (PRODUCTS[i].id === id) return PRODUCTS[i]; return null; }
+var REDUCED = false;
+try { REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+
+/* ===================== ৩ডি ===================== */
+var T = window.THREE, HAS3D = !!T;
+var thumbs = {};
+
+function mat(c, r, m, x) {
+  var o = { color: c, roughness: r == null ? 0.55 : r, metalness: m == null ? 0.05 : m };
+  if (x) for (var k in x) o[k] = x[k];
+  return new T.MeshStandardMaterial(o);
+}
+function mk(g, m) { return new T.Mesh(g, m); }
+function lathe(pts, seg) { return new T.LatheGeometry(pts.map(function (p) { return new T.Vector2(p[0], p[1]); }), seg || 48); }
+function bar(x0, x1, w) {
+  var pts = [], r = w / 2, i, a;
+  pts.push(new T.Vector2(x0, -r), new T.Vector2(x1 - r, -r));
+  for (i = 1; i < 12; i++) { a = -Math.PI / 2 + Math.PI * i / 12; pts.push(new T.Vector2(x1 - r + Math.cos(a) * r, Math.sin(a) * r)); }
+  pts.push(new T.Vector2(x1 - r, r), new T.Vector2(x0, r));
+  return new T.Shape(pts);
+}
+function paddle(x0, x1, w) {
+  var pts = [], i, n = 40, cx = (x0 + x1) / 2, rx = (x1 - x0) / 2, ry = w / 2, a;
+  for (i = 0; i < n; i++) { a = i / n * Math.PI * 2; pts.push(new T.Vector2(cx + Math.cos(a) * rx, Math.sin(a) * ry * (1 + 0.25 * Math.cos(a)))); }
+  return new T.Shape(pts);
+}
+function slab(shape, t, bevel) {
+  var g = new T.ExtrudeGeometry(shape, { depth: t, bevelEnabled: !!bevel, bevelThickness: bevel || 0, bevelSize: bevel || 0, bevelSegments: 3, curveSegments: 24 });
+  g.translate(0, 0, -t / 2);
+  return g;
+}
+function disposeObj(o) {
+  o.traverse(function (c) {
+    if (c.geometry) c.geometry.dispose();
+    if (c.material) (Array.isArray(c.material) ? c.material : [c.material]).forEach(function (m) { m.dispose(); });
+  });
+}
+
+function ceilingFan(o) {
+  var D = o.d, R = D / 2, n = o.n || 3, g = new T.Group(), i, p, b;
+  var hr = Math.max(0.1, R * 0.3), hh = hr * 0.55;
+  var body = mat(o.body, 0.42, 0.12, { side: T.DoubleSide }), blade = mat(o.blade, 0.5, 0.05, { side: T.DoubleSide }), cap = mat(o.cap, 0.4, 0.2), acc = mat(o.accent, 0.3, 0.4);
+  g.add(mk(lathe([[0.001, -hh * 0.95], [hr * 0.5, -hh * 0.95], [hr * 0.72, -hh * 0.7], [hr * 0.96, -hh * 0.15], [hr, hh * 0.2], [hr * 0.94, hh * 0.6], [hr * 0.7, hh * 0.95], [hr * 0.34, hh], [0.001, hh]], 56), body));
+  var ring = mk(new T.TorusGeometry(hr * 0.985, hr * 0.03, 12, 64), acc); ring.rotation.x = Math.PI / 2; ring.position.y = -hh * 0.05; g.add(ring);
+  var capm = mk(new T.CylinderGeometry(hr * 0.3, hr * 0.3, 0.012, 40), cap); capm.position.y = -hh * 0.96; g.add(capm);
+  var rl = Math.max(0.14, R * 0.42);
+  var neck = mk(new T.CylinderGeometry(hr * 0.16, hr * 0.22, hh * 0.7, 24), body); neck.position.y = hh + hh * 0.3; g.add(neck);
+  var rod = mk(new T.CylinderGeometry(hr * 0.09, hr * 0.09, rl, 20), body); rod.position.y = hh + hh * 0.6 + rl / 2; g.add(rod);
+  var cr = hr * 0.62, top = hh + hh * 0.6 + rl;
+  var canopy = mk(lathe([[0.001, 0], [cr * 0.5, 0], [cr * 0.62, 0.03], [cr, 0.075], [cr * 0.92, 0.105], [cr * 0.4, 0.125], [0.001, 0.125]], 40), body); canopy.position.y = top - 0.02; g.add(canopy);
+  var spin = new T.Group(); spin.position.y = hh * 0.05; g.add(spin);
+  var bw = n === 4 ? R * 0.26 : R * 0.2;
+  var bg = slab(bar(hr * 0.88, R, bw), 0.008); bg.rotateX(-Math.PI / 2);
+  for (i = 0; i < n; i++) { p = new T.Group(); p.rotation.y = i * Math.PI * 2 / n; b = mk(bg, blade); b.rotation.x = 0.17; p.add(b); spin.add(p); }
+  return { group: g, hasSpin: true, el: -0.2, pose: function (a) { spin.rotation.y = a; }, tick: function (dt, s) { spin.rotation.y -= s * dt; } };
+}
+
+function grilleHead(o) {
+  var R = o.r, n = o.n || 3, h = new T.Group(), i, a;
+  var wc = o.wire || 0xb9c2cc;
+  var lineM = new T.LineBasicMaterial({ color: wc });
+  var ringM = mat(wc, 0.4, 0.2), rimM = mat(o.rim, 0.4, 0.15, { side: T.DoubleSide }), bladeM = mat(o.blade, 0.45, 0.05, { side: T.DoubleSide }), hubM = mat(o.hub, 0.4, 0.1), bodyM = mat(o.body, 0.5, 0.1);
+  var spin = new T.Group(); spin.position.z = 0.015; h.add(spin);
+  var gb = slab(paddle(R * 0.14, R * 0.92, R * 0.36), 0.006);
+  for (i = 0; i < n; i++) { var pv = new T.Group(); pv.rotation.z = i * Math.PI * 2 / n; var b = mk(gb, bladeM); b.rotation.x = 0.5; pv.add(b); spin.add(pv); }
+  var hub = mk(new T.CylinderGeometry(R * 0.16, R * 0.16, 0.035, 36), hubM); hub.rotation.x = Math.PI / 2; hub.position.z = 0.03; h.add(hub);
+  var back = mk(new T.CylinderGeometry(R * 0.2, R * 0.26, R * 0.5, 36), bodyM); back.rotation.x = Math.PI / 2; back.position.z = -R * 0.24; h.add(back);
+  var band = mk(new T.CylinderGeometry(R, R, 0.08, 64, 1, true), rimM); band.rotation.x = Math.PI / 2; h.add(band);
+  var pts = [], fr = [1, 0.78, 0.56, 0.34, 0.14], N = 36;
+  [[0.04, R * 0.24], [-0.04, -R * 0.2]].forEach(function (s) {
+    var z0 = s[0], dome = s[1];
+    fr.forEach(function (f) { var t = mk(new T.TorusGeometry(R * f, 0.0035, 6, f > 0.5 ? 72 : 36), ringM); t.position.z = z0 + dome * (1 - f); h.add(t); });
+    for (a = 0; a < N; a++) { var an = a / N * Math.PI * 2; pts.push(new T.Vector3(0, 0, z0 + dome), new T.Vector3(Math.cos(an) * R, Math.sin(an) * R, z0)); }
+  });
+  h.add(new T.LineSegments(new T.BufferGeometry().setFromPoints(pts), lineM));
+  return { head: h, spin: spin };
+}
+
+function wallFan(o) {
+  var g = new T.Group(), hd = grilleHead(o), pv = new T.Group(), R = o.r;
+  var bodyM = mat(o.body, 0.5, 0.1), knobM = mat(o.hub, 0.4, 0.1), cordM = mat(0x22262b, 0.6, 0.05);
+  pv.position.set(0, 0, -0.2); hd.head.position.z = 0.2; pv.add(hd.head);
+  var arm = mk(new T.BoxGeometry(0.05, 0.05, 0.1), bodyM); arm.position.z = 0.05; pv.add(arm);
+  g.add(pv);
+  var post = mk(new T.CylinderGeometry(0.03, 0.03, 0.3, 20), bodyM); post.position.set(0, -0.15, -0.2); g.add(post);
+  var base = mk(new T.BoxGeometry(0.2, 0.17, 0.09), bodyM); base.position.set(0, -0.32, -0.23); g.add(base);
+  var knob = mk(new T.CylinderGeometry(0.03, 0.03, 0.02, 24), knobM); knob.rotation.x = Math.PI / 2; knob.position.set(0, -0.32, -0.175); g.add(knob);
+  var plate = mk(new T.BoxGeometry(0.28, 0.62, 0.025), bodyM); plate.position.set(0, -0.2, -0.29); g.add(plate);
+  [-0.05, 0.05].forEach(function (x) { var c = mk(new T.CylinderGeometry(0.004, 0.004, 0.25, 6), cordM); c.position.set(x, -0.52, -0.2); g.add(c); });
+  return { group: g, hasSpin: true, el: 0.12, pose: function (a) { hd.spin.rotation.z = a; },
+    tick: function (dt, s, t) { hd.spin.rotation.z -= s * dt; pv.rotation.y = Math.sin(t * 0.7) * 0.55 * Math.min(1, s / 5); } };
+}
+
+function orbitFan(o) {
+  var g = new T.Group(), hd = grilleHead(o), orb = new T.Group(), bodyM = mat(o.body, 0.5, 0.1);
+  var plate = mk(new T.BoxGeometry(0.3, 0.025, 0.3), bodyM); plate.position.y = 0.42; g.add(plate);
+  var post = mk(new T.CylinderGeometry(0.025, 0.025, 0.38, 20), bodyM); post.position.y = 0.23; orb.add(post);
+  var yoke = mk(new T.BoxGeometry(0.05, 0.05, 0.22), bodyM); yoke.position.set(0, 0.04, 0.1); orb.add(yoke);
+  hd.head.position.set(0, -0.02, 0.24); hd.head.rotation.x = 0.95; orb.add(hd.head); g.add(orb);
+  return { group: g, hasSpin: true, el: -0.1, pose: function (a) { hd.spin.rotation.z = a; },
+    tick: function (dt, s) { hd.spin.rotation.z -= s * dt; orb.rotation.y += dt * 0.6 * Math.min(1, s / 5); } };
+}
+
+function standFan(o) {
+  var g = new T.Group(), hd = grilleHead(o), R = o.r, bodyM = mat(o.body, 0.5, 0.1), metal = mat(0xb4bac2, 0.35, 0.3), dark = mat(0x3a3a40, 0.5, 0.1);
+  var base = mk(new T.CylinderGeometry(0.2, 0.22, 0.035, 48), bodyM); base.position.y = 0.0175; g.add(base);
+  var base2 = mk(new T.CylinderGeometry(0.06, 0.09, 0.05, 32), bodyM); base2.position.y = 0.06; g.add(base2);
+  var pole = mk(new T.CylinderGeometry(0.02, 0.02, 1.0, 24), metal); pole.position.y = 0.58; g.add(pole);
+  var pb = mk(new T.BoxGeometry(0.06, 0.14, 0.03), bodyM); pb.position.set(0, 0.85, 0.03); g.add(pb);
+  [0.89, 0.85, 0.81].forEach(function (y) { var bt = mk(new T.BoxGeometry(0.03, 0.02, 0.01), dark); bt.position.set(0, y, 0.05); g.add(bt); });
+  var pv = new T.Group(); pv.position.set(0, 1.15, 0); g.add(pv);
+  var neck = mk(new T.BoxGeometry(0.06, 0.06, 0.15), bodyM); neck.position.z = 0.02; pv.add(neck);
+  hd.head.position.z = R * 0.5 + 0.02; hd.head.rotation.x = -0.08; pv.add(hd.head);
+  return { group: g, hasSpin: true, el: 0.1, pose: function (a) { hd.spin.rotation.z = a; },
+    tick: function (dt, s, t) { hd.spin.rotation.z -= s * dt; pv.rotation.y = Math.sin(t * 0.7) * 0.5 * Math.min(1, s / 5); } };
+}
+
+function tableFan(o) {
+  var g = new T.Group(), hd = grilleHead(o), R = o.r, bodyM = mat(o.body, 0.5, 0.1), dark = mat(0x2b2b30, 0.5, 0.1), led = mat(0x44d27a, 0.4, 0.1);
+  var base = mk(new T.CylinderGeometry(0.17, 0.19, 0.07, 48), bodyM); base.position.y = 0.035; g.add(base);
+  var top = mk(new T.CylinderGeometry(0.1, 0.16, 0.06, 48), bodyM); top.position.y = 0.1; g.add(top);
+  var panel = mk(new T.BoxGeometry(0.12, 0.008, 0.05), dark); panel.position.set(0, 0.132, 0.07); g.add(panel);
+  [-0.03, 0, 0.03].forEach(function (x) { var l = mk(new T.BoxGeometry(0.014, 0.01, 0.01), led); l.position.set(x, 0.138, 0.07); g.add(l); });
+  var neck = mk(new T.CylinderGeometry(0.03, 0.04, 0.2, 24), bodyM); neck.position.y = 0.23; g.add(neck);
+  var pv = new T.Group(); pv.position.set(0, 0.34, 0); g.add(pv);
+  var nk = mk(new T.BoxGeometry(0.05, 0.05, 0.1), bodyM); pv.add(nk);
+  hd.head.position.z = R * 0.5 + 0.02; hd.head.rotation.x = -0.1; pv.add(hd.head);
+  return { group: g, hasSpin: true, el: 0.14, pose: function (a) { hd.spin.rotation.z = a; },
+    tick: function (dt, s, t) { hd.spin.rotation.z -= s * dt; pv.rotation.y = Math.sin(t * 0.7) * 0.5 * Math.min(1, s / 5); } };
+}
+
+function remoteSet() {
+  var g = new T.Group(), i, white = mat(0xf4f5f4, 0.45, 0.05), grey = mat(0xd8dcd9, 0.5, 0.05), dark = mat(0x6f776f, 0.5, 0.1);
+  var sw = new T.Group(); sw.position.x = -0.13; g.add(sw);
+  sw.add(mk(new T.BoxGeometry(0.13, 0.13, 0.03), white));
+  [0.036, 0.012, -0.012, -0.036].forEach(function (y) { var b = mk(new T.BoxGeometry(0.09, 0.018, 0.006), grey); b.position.set(0, y, 0.018); sw.add(b); });
+  for (i = -2; i <= 2; i++) { var d = mk(new T.CylinderGeometry(0.003, 0.003, 0.004, 8), dark); d.rotation.x = Math.PI / 2; d.position.set(i * 0.02, 0.057, 0.016); sw.add(d); }
+  var ho = new T.Group(); ho.position.set(0.1, 0, 0); ho.rotation.z = -0.35; g.add(ho);
+  var pts = [], a; for (i = 0; i < 40; i++) { a = i / 40 * Math.PI * 2; pts.push(new T.Vector2(Math.cos(a) * 0.04, Math.sin(a) * 0.1)); }
+  ho.add(mk(slab(new T.Shape(pts), 0.02, 0.006), white));
+  [[-0.016, 0.06], [0.016, 0.06], [0, 0.028], [-0.016, -0.004], [0.016, -0.004], [0, -0.04]].forEach(function (p) {
+    var bt = mk(new T.CylinderGeometry(0.011, 0.011, 0.006, 20), grey); bt.rotation.x = Math.PI / 2; bt.position.set(p[0], p[1], 0.02); ho.add(bt);
+  });
+  return { group: g, hasSpin: false, el: 0.08, tick: function () {} };
+}
+
+function cord() {
+  var g = new T.Group(), i, white = mat(0xf3f4f6, 0.45, 0.05), blk = mat(0x1d1f24, 0.5, 0.1), pin = mat(0xb9bec6, 0.3, 0.5), red = mat(0xe03b3b, 0.4, 0.1);
+  g.add(mk(new T.BoxGeometry(0.4, 0.05, 0.09), white));
+  for (i = 0; i < 3; i++) {
+    var x = -0.1 + i * 0.11;
+    var pl = mk(new T.BoxGeometry(0.07, 0.004, 0.05), blk); pl.position.set(x, 0.026, -0.008); g.add(pl);
+    [-0.015, 0.015].forEach(function (dx) { var h = mk(new T.BoxGeometry(0.012, 0.006, 0.014), pin); h.position.set(x + dx, 0.028, -0.022); g.add(h); });
+    var e = mk(new T.CylinderGeometry(0.006, 0.006, 0.006, 12), pin); e.position.set(x, 0.028, 0.006); g.add(e);
+    var sw = mk(new T.BoxGeometry(0.032, 0.014, 0.02), blk); sw.position.set(x, 0.03, 0.032); g.add(sw);
+  }
+  var led = mk(new T.BoxGeometry(0.01, 0.004, 0.01), red); led.position.set(0.17, 0.026, 0); g.add(led);
+  var curve = new T.CatmullRomCurve3([new T.Vector3(-0.2, 0, 0), new T.Vector3(-0.28, -0.02, 0.02), new T.Vector3(-0.36, -0.02, -0.08), new T.Vector3(-0.46, -0.02, 0.06), new T.Vector3(-0.56, -0.02, -0.02), new T.Vector3(-0.62, -0.02, 0)]);
+  g.add(mk(new T.TubeGeometry(curve, 48, 0.007, 10, false), white));
+  var plug = mk(new T.BoxGeometry(0.06, 0.035, 0.045), white); plug.position.set(-0.65, -0.02, 0); g.add(plug);
+  [-0.012, 0.012].forEach(function (z) { var p = mk(new T.CylinderGeometry(0.005, 0.005, 0.03, 10), pin); p.rotation.z = Math.PI / 2; p.position.set(-0.695, -0.02, z); g.add(p); });
+  return { group: g, hasSpin: false, el: 0.75, tick: function () {} };
+}
+
+function build(p) {
+  switch (p.m) {
+    case "ceil": return ceilingFan(p.o);
+    case "wall": return wallFan(p.o);
+    case "orbit": return orbitFan(p.o);
+    case "stand": return standFan(p.o);
+    case "table": return tableFan(p.o);
+    case "remote": return remoteSet(p.o);
+    default: return cord(p.o);
+  }
+}
+
+function makeScene() {
+  var s = new T.Scene(), cam = new T.PerspectiveCamera(36, 1, 0.05, 60);
+  s.add(cam);
+  s.add(new T.HemisphereLight(0xffffff, 0x9aa0ac, 0.95));
+  var d = new T.DirectionalLight(0xffffff, 0.9); d.position.set(2, 3, 4); cam.add(d);
+  var d2 = new T.DirectionalLight(0xffffff, 0.35); d2.position.set(-3, -1, 2); cam.add(d2);
+  return { scene: s, cam: cam };
+}
+function fitDist(r, aspect) {
+  var vf = 36 * Math.PI / 180, hf = 2 * Math.atan(Math.tan(vf / 2) * aspect), f = Math.min(vf, hf);
+  return r * 0.85 / Math.sin(f / 2);
+}
+function place(cam, st) {
+  var cp = Math.cos(st.el);
+  cam.position.set(Math.sin(st.az) * cp * st.dist, Math.sin(st.el) * st.dist, Math.cos(st.az) * cp * st.dist);
+  cam.lookAt(0, 0, 0);
+}
+function centerModel(model) {
+  var g = model.group; g.updateMatrixWorld(true);
+  var box = new T.Box3().setFromObject(g), c = box.getCenter(new T.Vector3()), sp = box.getBoundingSphere(new T.Sphere());
+  g.position.sub(c);
+  return sp.radius;
+}
+
+var stage = { sel: null };
+var stageEl = document.getElementById("stage");
+
+function init3D() {
+  var canvas = document.getElementById("gl"), renderer;
+  try { renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true }); } catch (e) { return false; }
+  renderer.outputEncoding = T.sRGBEncoding; renderer.setClearColor(0x000000, 0);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  var sc = makeScene(), holder = new T.Group(); sc.scene.add(holder);
+  var st = { az: 0.55, el: 0, dist: 3 }, model = null, radius = 1, enter = 1;
+  var SPEEDS = [0, 5, 10, 16], speedIdx = REDUCED ? 0 : 1, curSpd = 0, auto = !REDUCED, drag = null, lastDrag = 0, visible = true, aspect = 1.3;
+
+  function refit() { st.dist = fitDist(radius, aspect); }
+  function resize() {
+    var w = stageEl.clientWidth, h = stageEl.clientHeight; if (!w || !h) return;
+    renderer.setSize(w, h, false); aspect = w / h; sc.cam.aspect = aspect; sc.cam.updateProjectionMatrix(); refit();
+  }
+  stage.show = function (p) {
+    if (model) { holder.remove(model.group); disposeObj(model.group); }
+    model = build(p); radius = centerModel(model); holder.add(model.group);
+    st.el = model.el; refit();
+    enter = REDUCED ? 1 : 0; holder.scale.setScalar(REDUCED ? 1 : 0.8);
+    var seg = document.getElementById("spdCtl"); seg.hidden = !model.hasSpin;
+    document.getElementById("stHint").textContent = model.hasSpin ? "টেনে ঘুরিয়ে দেখুন" : "টেনে ঘুরিয়ে দেখুন (এটিতে ঘোরার অংশ নেই)";
+  };
+  stage.setSpeed = function (i) {
+    speedIdx = i;
+    Array.prototype.forEach.call(document.querySelectorAll("#spdSeg button"), function (b) { b.setAttribute("aria-pressed", String(+b.getAttribute("data-s") === i)); });
+  };
+  stage.setSpeed(speedIdx);
+  Array.prototype.forEach.call(document.querySelectorAll("#spdSeg button"), function (b) { b.onclick = function () { stage.setSpeed(+b.getAttribute("data-s")); }; });
+  var ab = document.getElementById("autoBtn");
+  ab.setAttribute("aria-pressed", String(auto));
+  ab.onclick = function () { auto = !auto; ab.setAttribute("aria-pressed", String(auto)); };
+
+  canvas.addEventListener("pointerdown", function (e) {
+    drag = { x: e.clientX, y: e.clientY, az: st.az, el: st.el };
+    try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
+  });
+  canvas.addEventListener("pointermove", function (e) {
+    if (!drag) return;
+    st.az = drag.az + (e.clientX - drag.x) * 0.008;
+    if (e.pointerType === "mouse") st.el = Math.max(-0.6, Math.min(1.0, drag.el + (e.clientY - drag.y) * 0.006));
+  });
+  function endDrag() { drag = null; lastDrag = performance.now(); }
+  canvas.addEventListener("pointerup", endDrag); canvas.addEventListener("pointercancel", endDrag);
+  canvas.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowLeft") { st.az -= 0.15; lastDrag = performance.now(); e.preventDefault(); }
+    if (e.key === "ArrowRight") { st.az += 0.15; lastDrag = performance.now(); e.preventDefault(); }
+  });
+
+  try { new ResizeObserver(resize).observe(stageEl); } catch (e) { window.addEventListener("resize", resize); }
+  try { new IntersectionObserver(function (en) { visible = en[0].isIntersecting; }).observe(stageEl); } catch (e) {}
+  resize();
+
+  var last = performance.now(), tAcc = 0;
+  function loop(now) {
+    requestAnimationFrame(loop);
+    if (!visible || document.hidden) { last = now; return; }
+    var dt = Math.min(0.05, (now - last) / 1000); last = now; tAcc += dt;
+    curSpd += (SPEEDS[speedIdx] - curSpd) * Math.min(1, dt * 2.5);
+    if (auto && !drag && now - lastDrag > 1800) st.az += dt * 0.4;
+    if (model) model.tick(dt, curSpd, tAcc);
+    if (enter < 1) { enter = Math.min(1, enter + dt * 3.5); holder.scale.setScalar(0.8 + 0.2 * (1 - Math.pow(1 - enter, 3))); }
+    place(sc.cam, st);
+    renderer.render(sc.scene, sc.cam);
+  }
+  requestAnimationFrame(loop);
+  return true;
+}
+
+function makeThumbs() {
+  var tr;
+  try { tr = new T.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); } catch (e) { return; }
+  tr.outputEncoding = T.sRGBEncoding; tr.setClearColor(0x000000, 0); tr.setPixelRatio(1); tr.setSize(560, 420);
+  var ts = makeScene(), hold = new T.Group(), i = 0; ts.scene.add(hold); ts.cam.aspect = 4 / 3; ts.cam.updateProjectionMatrix();
+  function next() {
+    if (i >= PRODUCTS.length) { tr.dispose(); return; }
+    var p = PRODUCTS[i++];
+    try {
+      var m = build(p), r = centerModel(m);
+      hold.add(m.group); if (m.pose) m.pose(0.4);
+      place(ts.cam, { az: 0.55, el: m.el, dist: fitDist(r, 4 / 3) });
+      tr.render(ts.scene, ts.cam);
+      thumbs[p.id] = tr.domElement.toDataURL("image/png");
+      hold.remove(m.group); disposeObj(m.group);
+      applyThumb(p.id);
+    } catch (e) {}
+    setTimeout(next, 16);
+  }
+  next();
+}
+
+/* ===================== শোরুম ও তালিকা ===================== */
+var cart = {}, catF = "all", brandF = "all", selId = PRODUCTS[0].id, GL = false;
+
+function priceHTML(p, el) {
+  if (p.price) { el.className = el.className.replace(/\bask\b/g, "").trim(); el.innerHTML = tk(p.price) + "<small>এমআরপি</small>"; }
+  else { if (!/\bask\b/.test(el.className)) el.className += " ask"; el.textContent = "দাম জিজ্ঞাসা করুন"; }
+}
+
+function renderPanel() {
+  var p = byId(selId);
+  document.getElementById("panel").setAttribute("data-brand", p.brand);
+  stageEl.setAttribute("data-brand", p.brand);
+  document.getElementById("pTag").textContent = p.brand + " · " + CATNAME[p.cat];
+  document.getElementById("stTag").textContent = p.brand;
+  document.getElementById("pName").textContent = p.name;
+  document.getElementById("pSub").textContent = p.sub;
+  priceHTML(p, document.getElementById("pPrice"));
+  var t = document.getElementById("pSpec"); t.innerHTML = "";
+  p.spec.forEach(function (r) { var tr = document.createElement("tr"); tr.innerHTML = "<td></td><td></td>"; tr.children[0].textContent = r[0]; tr.children[1].textContent = r[1]; t.appendChild(tr); });
+  var n = document.getElementById("pNote"); n.hidden = !p.note; n.textContent = p.note || "";
+}
+
+function select(id, scroll) {
+  selId = id; renderPanel(); renderGrid();
+  if (GL) stage.show(byId(id));
+  if (scroll) document.getElementById("showroom").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" });
+}
+
+function applyThumb(id) {
+  var img = document.querySelector('img[data-id="' + id + '"]');
+  if (img && thumbs[id]) { img.src = thumbs[id]; img.hidden = false; var ph = img.parentNode.querySelector(".ph"); if (ph) ph.hidden = true; }
+}
+
+function renderFilters() {
+  var f = document.getElementById("filters"); f.innerHTML = "";
+  function chip(label, on, fn) { var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = label; b.setAttribute("aria-pressed", String(on)); b.onclick = fn; f.appendChild(b); }
+  CATS.forEach(function (c) { chip(c[1], catF === c[0], function () { catF = c[0]; renderFilters(); renderGrid(); }); });
+  var gap = document.createElement("span"); gap.className = "gap"; f.appendChild(gap);
+  [["all", "সব ব্র্যান্ড"], ["Vision", "Vision"], ["Click", "Click"]].forEach(function (b) { chip(b[1], brandF === b[0], function () { brandF = b[0]; renderFilters(); renderGrid(); }); });
+}
+
+function renderGrid() {
+  var g = document.getElementById("grid"); g.innerHTML = "";
+  var list = PRODUCTS.filter(function (p) { return (catF === "all" || p.cat === catF) && (brandF === "all" || p.brand === brandF); });
+  if (!list.length) { g.innerHTML = '<p class="empty-grid">এই বাছাইয়ে কোনো পণ্য নেই।</p>'; return; }
+  list.forEach(function (p) {
+    var c = document.createElement("article");
+    c.className = "card" + (p.id === selId ? " sel" : ""); c.setAttribute("data-brand", p.brand);
+    c.innerHTML = '<button type="button" class="pic"><img alt="" hidden data-id=""><span class="ph"></span></button><div class="body">' +
+      '<span class="tag"></span><h3></h3><p class="sub"></p><div class="buy"><div class="price"></div><div class="btns"><button type="button" class="view"></button><button type="button" class="add">কার্টে</button></div></div></div>';
+    var img = c.querySelector("img"); img.setAttribute("data-id", p.id);
+    var pic = c.querySelector(".pic"); pic.setAttribute("aria-label", p.name + " ৩ডি-তে দেখুন");
+    c.querySelector(".ph").textContent = GL ? "ছবি তৈরি হচ্ছে" : CATNAME[p.cat];
+    c.querySelector(".tag").textContent = p.brand;
+    c.querySelector("h3").textContent = p.name;
+    c.querySelector(".sub").textContent = p.sub;
+    priceHTML(p, c.querySelector(".price"));
+    var v = c.querySelector(".view"); v.textContent = p.id === selId ? "দেখছেন" : "৩ডি দেখুন";
+    pic.onclick = v.onclick = function () { select(p.id, true); };
+    c.querySelector(".add").onclick = function () { addToCart(p.id); };
+    g.appendChild(c);
+    if (thumbs[p.id]) applyThumb(p.id);
+  });
+}
+
+/* ===================== কার্ট ===================== */
+function addToCart(id) { cart[id] = (cart[id] || 0) + 1; update(); openCart("cart"); }
+function items() { return PRODUCTS.filter(function (p) { return cart[p.id]; }); }
+function total() { return items().reduce(function (s, p) { return s + (p.price ? p.price * cart[p.id] : 0); }, 0); }
+function hasUnknown() { return items().some(function (p) { return !p.price; }); }
+function count() { return items().reduce(function (s, p) { return s + cart[p.id]; }, 0); }
+function totalText() { var t = total(); return t ? tk(t) : "দাম নিশ্চিত হবে"; }
+function update() { document.getElementById("cnt").textContent = bn(count()); if (!document.getElementById("drawer").hidden) drawCart(); }
+
+var mode = "cart", lastOrder = "";
+function openCart(m) { mode = m || "cart"; document.getElementById("drawer").hidden = false; document.getElementById("scrim").hidden = false; drawCart(); }
+function closeCart() { document.getElementById("drawer").hidden = true; document.getElementById("scrim").hidden = true; }
+
+function drawCart() {
+  var body = document.getElementById("dbody"), foot = document.getElementById("dfoot");
+  body.innerHTML = ""; foot.innerHTML = "";
+  if (mode === "done") { drawDone(body, foot); return; }
+  var list = items();
+  if (!list.length) {
+    mode = "cart";
+    document.getElementById("dtitle").textContent = "আপনার কার্ট";
+    body.innerHTML = '<div class="empty">কার্ট খালি আছে। পছন্দের পণ্য যোগ করুন।</div>';
+    return;
+  }
+  var note = hasUnknown() ? '<p class="note">যেসব পণ্যের দাম লেখা নেই, অর্ডার নিশ্চিত করার সময় দোকান থেকে জানানো হবে। ডেলিভারি চার্জ থাকলে তখনই জানানো হবে।</p>' : '<p class="note">ডেলিভারি চার্জ থাকলে অর্ডার নিশ্চিত করার সময় জানানো হবে।</p>';
+  if (mode === "cart") {
+    document.getElementById("dtitle").textContent = "আপনার কার্ট";
+    list.forEach(function (p) {
+      var l = document.createElement("div"); l.className = "line";
+      l.innerHTML = '<div class="nm"></div><div class="lp"></div><div class="qty"><button type="button" aria-label="কমান">−</button><span></span><button type="button" aria-label="বাড়ান">+</button></div><button type="button" class="rm">বাদ দিন</button>';
+      l.querySelector(".nm").textContent = p.name;
+      var lp = l.querySelector(".lp");
+      if (p.price) lp.textContent = tk(p.price * cart[p.id]); else { lp.className += " ask"; lp.textContent = "দাম নিশ্চিত হবে"; }
+      l.querySelector(".qty span").textContent = bn(cart[p.id]);
+      var bs = l.querySelectorAll(".qty button");
+      bs[0].onclick = function () { cart[p.id] = Math.max(0, cart[p.id] - 1); update(); };
+      bs[1].onclick = function () { cart[p.id] += 1; update(); };
+      l.querySelector(".rm").onclick = function () { cart[p.id] = 0; update(); };
+      body.appendChild(l);
+    });
+    foot.innerHTML = '<div class="tot"><span>মোট</span><b></b></div>' + note + '<button type="button" class="primary">অর্ডার করতে এগিয়ে যান</button>';
+    foot.querySelector("b").textContent = totalText();
+    foot.querySelector(".primary").onclick = function () { mode = "form"; drawCart(); };
+    return;
+  }
+  document.getElementById("dtitle").textContent = "ডেলিভারির তথ্য";
+  body.innerHTML = '<div class="field"><label for="fName">আপনার নাম</label><input id="fName" autocomplete="name"><span class="err" id="eName"></span></div>' +
+    '<div class="field"><label for="fPhone">মোবাইল নম্বর</label><input id="fPhone" inputmode="tel" autocomplete="tel" placeholder="01XXXXXXXXX"><span class="err" id="ePhone"></span></div>' +
+    '<div class="field"><label for="fAddr">পুরো ঠিকানা</label><textarea id="fAddr" rows="3" autocomplete="street-address"></textarea><span class="err" id="eAddr"></span></div>' +
+    '<div class="field"><label for="fNote">অতিরিক্ত কিছু জানাতে চাইলে (ঐচ্ছিক)</label><input id="fNote"></div>';
+  foot.innerHTML = '<div class="tot"><span>মোট (' + bn(count()) + 'টি পণ্য)</span><b></b></div><button type="button" class="primary">অর্ডার তৈরি করুন</button><button type="button" class="ghost">কার্টে ফিরে যান</button>';
+  foot.querySelector("b").textContent = totalText();
+  foot.querySelector(".ghost").onclick = function () { mode = "cart"; drawCart(); };
+  foot.querySelector(".primary").onclick = submitOrder;
+}
+
+function submitOrder() {
+  var name = document.getElementById("fName").value.trim(), phone = document.getElementById("fPhone").value.trim(),
+      addr = document.getElementById("fAddr").value.trim(), note = document.getElementById("fNote").value.trim();
+  var ok = true;
+  document.getElementById("eName").textContent = name ? "" : "নাম লিখুন"; if (!name) ok = false;
+  var digits = phone.replace(/[^0-9]/g, "");
+  var good = /^(01[3-9]\d{8})$/.test(digits) || /^(8801[3-9]\d{8})$/.test(digits);
+  document.getElementById("ePhone").textContent = good ? "" : "সঠিক মোবাইল নম্বর দিন (যেমন 01712345678)"; if (!good) ok = false;
+  document.getElementById("eAddr").textContent = addr.length > 9 ? "" : "পুরো ঠিকানা লিখুন"; if (addr.length <= 9) ok = false;
+  if (!ok) return;
+  var id = "ORD-" + Date.now().toString(36).toUpperCase().slice(-6);
+  var lines = items().map(function (p) { return "• " + p.name + " × " + bn(cart[p.id]) + " = " + (p.price ? tk(p.price * cart[p.id]) : "দাম নিশ্চিত হবে"); });
+  lastOrder = "নতুন অর্ডার " + id + "\n" + lines.join("\n") + "\nমোট: " + totalText() + (hasUnknown() && total() ? " (+ কিছু পণ্যের দাম নিশ্চিত হবে)" : "") + "\n\nনাম: " + name + "\nমোবাইল: " + phone + "\nঠিকানা: " + addr + (note ? "\nনোট: " + note : "");
+  mode = "done"; drawCart();
+}
+
+function drawDone(body, foot) {
+  document.getElementById("dtitle").textContent = "অর্ডার প্রস্তুত";
+  body.innerHTML = '<div class="done"><h3>প্রায় শেষ!</h3><p class="note">অর্ডারটি এখনো পাঠানো হয়নি। নিচের বোতামে চাপ দিয়ে WhatsApp-এ দোকানে পাঠান, অথবা লেখাটি কপি করে ফোনে জানান।</p></div><div class="sum" id="sum"></div>';
+  document.getElementById("sum").textContent = lastOrder;
+  foot.innerHTML = '<a class="primary" target="_blank" rel="noopener" id="wa">WhatsApp-এ অর্ডার পাঠান</a><button type="button" class="ghost" id="cp">অর্ডারের লেখা কপি করুন</button><p class="note" id="ph"></p>';
+  document.getElementById("wa").href = "https://wa.me/" + SHOP.whatsapp + "?text=" + encodeURIComponent(lastOrder);
+  document.getElementById("ph").textContent = "ফোনে জানাতে: " + SHOP.phone;
+  document.getElementById("cp").onclick = function () {
+    var b = this;
+    function ok() { b.textContent = "কপি হয়েছে"; }
+    function fail() { var r = document.createRange(); r.selectNodeContents(document.getElementById("sum")); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "লেখাটি বেছে নেওয়া হয়েছে, কপি করুন"; }
+    try { navigator.clipboard.writeText(lastOrder).then(ok, fail); } catch (e) { fail(); }
+  };
+}
+
+/* ===================== শুরু ===================== */
+document.getElementById("shopName").textContent = SHOP.name;
+document.getElementById("footName").textContent = SHOP.name;
+document.getElementById("footPhone").textContent = "ফোন: " + SHOP.phone;
+document.getElementById("footAddr").textContent = SHOP.address;
+document.getElementById("openCart").onclick = function () { openCart(mode === "done" ? "cart" : mode); };
+document.getElementById("closeCart").onclick = closeCart;
+document.getElementById("scrim").onclick = closeCart;
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeCart(); });
+document.getElementById("pAdd").onclick = function () { addToCart(selId); };
+
+function step(d) { var i = PRODUCTS.indexOf(byId(selId)); select(PRODUCTS[(i + d + PRODUCTS.length) % PRODUCTS.length].id, false); }
+document.getElementById("prevP").onclick = function () { step(-1); };
+document.getElementById("nextP").onclick = function () { step(1); };
+document.getElementById("waFab").href = "https://wa.me/" + SHOP.whatsapp + "?text=" + encodeURIComponent("আসসালামু আলাইকুম, পণ্য সম্পর্কে জানতে চাই।");
+if (HAS3D) { try { GL = init3D(); } catch (e) { GL = false; } }
+if (!GL) {
+  document.getElementById("gl").hidden = true;
+  document.getElementById("noGl").hidden = false;
+  document.getElementById("spdCtl").hidden = true;
+  document.getElementById("autoBtn").hidden = true;
+  document.getElementById("stHint").textContent = "";
+}
+renderFilters(); renderPanel(); renderGrid(); update();
+if (GL) { stage.show(byId(selId)); setTimeout(makeThumbs, 60); }
+</script>
+
+</body></html>
